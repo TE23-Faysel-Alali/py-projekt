@@ -1,87 +1,177 @@
+def Hita_taggar_med_position(html):
 
+    lista = []
+    index = 0
+    slut = len(html)
 
-def Hita_klass_namn(html):
-    n = len(html)
-    klass_namn_lista = []
-    klass_namn = ''
-    index_b = 0
-    index_s = len(html)
-    klass_b = 0
+    body_start = html.find("<body")
 
-    while klass_b != (-1):
-        
-        klass_b = html.find('<', index_b, index_s)
+    if body_start != -1:
+        index = body_start
+    else:
+        index = 0
 
-        if klass_b != (-1):
-            klass_s = html.find('>', klass_b, index_s)
+    while index < slut:
 
-            print(html.find('/', klass_b, klass_s))
+        start = html.find("<", index)
+        if start == -1:
+            break
 
-            
-            if html.find('/', klass_b, klass_s) != -1:
-                #Gör att den inte s
-                
-                pass
-            else: 
-                
-                for j in range(klass_s - (klass_b + 1)):
-                    klass_namn += (html[klass_b + 1 + j])
+        end = html.find(">", start)
+        if end == -1:
+            break
 
-                klass_namn_lista.append(klass_namn)
-                klass_namn = ''
+        tag = html[start+1:end]
+        lista.append(tag)
 
-                print(klass_b)
-                print(index_b)
-                print(klass_namn_lista)
+        index = end + 1
 
-            index_b = klass_s
-
-    return klass_namn_lista
-    
+    return lista
 
 
 
 
+def Hitta_class_i_tag(tag):
+
+    pos = tag.find('class="')
+
+    if pos != -1:
+        start = pos + 7
+        end = tag.find('"', start)
+        return tag[start:end]
+
+    return ""
 
 
 
 
+def Ta_bort_attribut(tag):
 
-def main ():
-    #html = input("Klistra in din html")
+    mellan = tag.find(" ")
+
+    if mellan != -1:
+        return tag[:mellan]
+
+    return tag
+
+
+
+
+def Skapa_css_med_nesting(taggar):
+
+    stack = []
+    kombinationer = []
+
+    for t in taggar:
+
+        if t.startswith("!") or t.startswith("body") or t.startswith("/body"):
+            continue
+
+
+        # STÄNGANDE TAGG
+        if t.startswith("/"):
+
+            stangd = t[1:]
+            stangd = Ta_bort_attribut(stangd)
+
+            i = len(stack) - 1
+            while i >= 0:
+
+                if stack[i][0] == stangd:
+                    stack.pop(i)
+                    break
+
+                i -= 1
+
+
+        # ÖPPNANDE TAGG
+        else:
+
+            ren_tag = Ta_bort_attribut(t)
+            class_namn = Hitta_class_i_tag(t)
+
+            if class_namn != "":
+                selector = "." + class_namn
+            else:
+                selector = ren_tag
+
+            # spara både HTML-tagg och selector
+            stack.append([ren_tag, selector])
+
+            komb = ""
+
+            for s in stack:
+                komb += s[1] + " "
+
+            komb = komb.strip()
+
+            if komb not in kombinationer:
+                kombinationer.append(komb)
+
+
+    print("\n/* CSS MED RÄTT NESTING */\n")
+
+    for k in kombinationer:
+        print(k + " {")
+        print("    ")
+        print("}")
+        print()
+
+
+
+
+def main():
 
     html = """
+
+
+
+
 <!DOCTYPE html>
-<html lang="en">
+<html lang="sv">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Neon Cowboy Bebop</title>
+    <title>Responsiv Sida</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div class="contaner">
+    <div class="container">
         <header>
-            <h1>Neon Cowboy Bebop</h1>
-            <h2>A place where you can peafuly goon</h2>
+            <h1>Carl Marx</h1>
             <nav>
-                <a class="active" href="#">Home</a>
-                <a href="#">Gay Reels</a>
-                <a href="#">About Cowboy Bebop</a>
-                <a href="#">Find Me 😝</a>
+                <a href="#" class="active">Carl Marx</a>
+                <a href="#">Rosa Luximburg</a>
+                <a href="#">Fredic Engels</a>
+                <a href="#">Vladmir Lenin</a>
+                <a href="#">Che Geuvara</a>
             </nav>
         </header>
-"""
-    namn_lista = Hita_klass_namn (html)
-    print(namn_lista)
-    
-    
+        <main>
+            <h2>Om Carl Marx</h2>
+            <img src="./bilder/image1.png" alt="">
+            <p>Karl Marx (1818–1883) was a Prussian philosopher, economist, and revolutionary socialist whose critical analysis of capitalism and <br> theories on class struggle formed the basis of Marxism. Co-author of The Communist Manifesto (1848) with Friedrich Engels, he argued that history is driven by class conflict, predicting a worker revolution against capitalist oppression. </p>
+        </main>
+        <aside>
+            <p><a href="https://www.marxists.org/archive/marx/works/1877/06/karl-marx.htm">Biogrofy</a></p>
+            <p><a href="https://www.marxists.org/archive/marx/works/cw/index.htm">Collected Works</a></p>
+        </aside>
+        <footer>
+            <p>Faisal Alali 2026</p>
+        </footer>
+    </div>
+</body>
+</html>
 
+
+
+
+"""
+
+    taggar = Hita_taggar_med_position(html)
+
+    Skapa_css_med_nesting(taggar)
 
 
 
 main()
-
-
-
-
